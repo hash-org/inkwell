@@ -11,8 +11,6 @@ use inkwell::types::BasicMetadataTypeEnum;
 use inkwell::values::{BasicMetadataValueEnum, BasicValueEnum, FloatValue, FunctionValue, PointerValue};
 use inkwell::FloatPredicate;
 
-use inkwell_internals::llvm_versions;
-
 use crate::Token::*;
 
 const ANONYMOUS_FUNCTION_NAME: &str = "anonymous";
@@ -207,7 +205,7 @@ impl<'a> Lexer<'a> {
     }
 }
 
-impl<'a> Iterator for Lexer<'a> {
+impl Iterator for Lexer<'_> {
     type Item = Token;
 
     /// Lexes the next `Token` and returns it.
@@ -856,12 +854,12 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
         builder.build_alloca(self.context.f64_type(), name).unwrap()
     }
 
-    #[llvm_versions(..=14)]
+    #[cfg(feature = "typed-pointers")]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         self.builder.build_load(ptr, name).unwrap()
     }
 
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         self.builder.build_load(self.context.f64_type(), ptr, name).unwrap()
     }
@@ -1132,8 +1130,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
     /// Compiles the specified `Prototype` into an extern LLVM `FunctionValue`.
     fn compile_prototype(&self, proto: &Prototype) -> Result<FunctionValue<'ctx>, &'static str> {
         let ret_type = self.context.f64_type();
-        let args_types = std::iter::repeat(ret_type)
-            .take(proto.args.len())
+        let args_types = std::iter::repeat_n(ret_type, proto.args.len())
             .map(|f| f.into())
             .collect::<Vec<BasicMetadataTypeEnum>>();
         let args_types = args_types.as_slice();

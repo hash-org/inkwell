@@ -14,7 +14,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 ## Requirements
 
 * Rust 1.56+ (Stable, Beta, or Nightly)
-* One of LLVM 4-18
+* One of LLVM 8-18 (WIP: 19 and 20 are barely supported without extensive tests)
 
 ## Usage
 
@@ -22,7 +22,7 @@ You'll need to point your Cargo.toml to use a single LLVM version feature flag c
 
 ```toml
 [dependencies]
-inkwell = { version = "0.5.0", features = ["llvm18-0"] }
+inkwell = { version = "0.6.0", features = ["llvm18-1"] }
 ```
 
 Supported versions:
@@ -62,7 +62,7 @@ struct CodeGen<'ctx> {
 }
 
 impl<'ctx> CodeGen<'ctx> {
-    fn jit_compile_sum(&self) -> Option<JitFunction<SumFunc>> {
+    fn jit_compile_sum(&self) -> Option<JitFunction<'_, SumFunc>> {
         let i64_type = self.context.i64_type();
         let fn_type = i64_type.fn_type(&[i64_type.into(), i64_type.into(), i64_type.into()], false);
         let function = self.module.add_function("sum", fn_type, None);

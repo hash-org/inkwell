@@ -5,12 +5,10 @@ use inkwell::types::IntType;
 use inkwell::values::BasicValue;
 use inkwell::OptimizationLevel;
 
-#[llvm_versions(7..)]
 fn get_host_cpu_name() -> String {
     TargetMachine::get_host_cpu_name().to_string()
 }
 
-#[llvm_versions(7..)]
 fn get_host_cpu_features() -> String {
     TargetMachine::get_host_cpu_features().to_string()
 }
@@ -23,16 +21,6 @@ fn ptr_sized_int_type<'ctx>(target_machine: &TargetMachine, context: &'ctx Conte
 fn apply_target_to_module(target_machine: &TargetMachine, module: &Module) {
     module.set_triple(&target_machine.get_triple());
     module.set_data_layout(&target_machine.get_target_data().get_data_layout());
-}
-
-#[llvm_versions(..7)]
-fn get_host_cpu_name() -> String {
-    "".to_string()
-}
-
-#[llvm_versions(..7)]
-fn get_host_cpu_features() -> String {
-    "".to_string()
 }
 
 fn get_native_target_machine() -> TargetMachine {
@@ -166,7 +154,10 @@ fn test_symbol_iterator() {
                 "a" => {
                     assert!(!has_symbol_a);
                     has_symbol_a = true;
+                    #[cfg(unix)]
                     assert_eq!(symbol.size(), 1);
+                    #[cfg(windows)]
+                    assert_eq!(symbol.size(), 0);
                 },
                 "b" => {
                     assert!(!has_symbol_b);
